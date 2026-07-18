@@ -1,6 +1,31 @@
 import React from 'react';
 import { Compass, Users, Clock, AlertTriangle, ShieldAlert } from 'lucide-react';
 
+const SECTIONS = [
+  { id: '101', d: "M 120,80 L 280,80 L 270,70 L 130,70 Z", origin: "200px 75px", title: "Section 101 - Inner North" },
+  { id: '105', d: "M 120,220 L 280,220 L 270,230 L 130,230 Z", origin: "200px 225px", title: "Section 105 - Inner South" },
+  { id: '107', d: "M 110,95 L 110,205 L 120,195 L 120,105 Z", origin: "115px 150px", title: "Section 107 - Inner West" },
+  { id: '103', d: "M 290,95 L 290,205 L 280,195 L 280,105 Z", origin: "285px 150px", title: "Section 103 - Inner East" },
+  
+  // Corners Inner
+  { id: '108', d: "M 120,80 L 120,105 L 110,95 Z", title: "Section 108 - Corner NW" },
+  { id: '102', d: "M 280,80 L 280,105 L 290,95 Z", title: "Section 102 - Corner NE" },
+  { id: '104', d: "M 280,220 L 280,195 L 290,205 Z", title: "Section 104 - Corner SE" },
+  { id: '106', d: "M 120,220 L 120,195 L 110,205 Z", title: "Section 106 - Corner SW" },
+  
+  // Outer
+  { id: '201', d: "M 100,50 L 300,50 L 280,65 L 120,65 Z", title: "Section 201 - Outer North" },
+  { id: '205', d: "M 100,250 L 300,250 L 280,235 L 120,235 Z", title: "Section 205 - Outer South" },
+  { id: '207', d: "M 90,75 L 90,225 L 105,210 L 105,90 Z", title: "Section 207 - Outer West" },
+  { id: '203', d: "M 310,75 L 310,225 L 295,210 L 295,90 Z", title: "Section 203 - Outer East" },
+  
+  // VIP
+  { id: 'VIP-A', d: "M 100,50 L 120,65 L 105,90 L 90,75 Z", title: "VIP Suite A" },
+  { id: 'VIP-B', d: "M 300,50 L 280,65 L 295,90 L 310,75 Z", title: "VIP Suite B" },
+  { id: 'VIP-C', d: "M 300,250 L 280,235 L 295,210 L 310,225 Z", title: "VIP Suite C" },
+  { id: 'VIP-D', d: "M 100,250 L 120,235 L 105,210 L 90,225 Z", title: "VIP Suite D" }
+];
+
 export default function StadiumMap({ 
   selectedSection, 
   setSelectedSection, 
@@ -12,13 +37,19 @@ export default function StadiumMap({
     setSelectedSection(sectionId);
   };
 
+  const handleKeyDown = (e, sectionId) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleSectionClick(sectionId);
+    }
+  };
+
   const getHeatClass = (density) => {
     if (density < 50) return 'heat-low';
     if (density < 80) return 'heat-medium';
     return 'heat-high';
   };
 
-  // Render an SVG layout representing a generic stadium bowl
   return (
     <div className="glass-card glow-indigo" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div className="card-title-bar">
@@ -29,126 +60,56 @@ export default function StadiumMap({
       </div>
 
       <div className="stadium-svg-container">
-        <svg viewBox="0 0 400 300" width="100%" height="240" style={{ overflow: 'visible' }}>
+        <svg viewBox="0 0 400 300" width="100%" height="240" style={{ overflow: 'visible' }} aria-label="Interactive Stadium Map Grid">
           {/* Pitch / Field */}
-          <rect x="130" y="90" width="140" height="120" rx="6" className="field-grass" />
+          <rect x="130" y="90" width="140" height="120" rx="6" className="field-grass" aria-hidden="true" />
           {/* Field markings */}
-          <rect x="130" y="90" width="140" height="120" rx="6" className="field-lines" />
-          <line x1="200" y1="90" x2="200" y2="210" className="field-lines" />
-          <circle cx="200" cy="150" r="25" className="field-lines" />
-          <rect x="130" y="125" width="20" height="50" className="field-lines" />
-          <rect x="250" y="125" width="20" height="50" className="field-lines" />
+          <rect x="130" y="90" width="140" height="120" rx="6" className="field-lines" aria-hidden="true" />
+          <line x1="200" y1="90" x2="200" y2="210" className="field-lines" aria-hidden="true" />
+          <circle cx="200" cy="150" r="25" className="field-lines" aria-hidden="true" />
+          <rect x="130" y="125" width="20" height="50" className="field-lines" aria-hidden="true" />
+          <rect x="250" y="125" width="20" height="50" className="field-lines" aria-hidden="true" />
 
-          {/* INNER BOWL SECTIONS */}
-          {/* Top Inner (101) */}
-          <path 
-            d="M 120,80 L 280,80 L 270,70 L 130,70 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['101']?.density)}`}
-            onClick={() => handleSectionClick('101')}
-            style={{ transform: selectedSection === '101' ? 'scale(1.03)' : 'none', transformOrigin: '200px 75px' }}
-          >
-            <title>Section 101 - Inner North</title>
-          </path>
-          
-          {/* Bottom Inner (105) */}
-          <path 
-            d="M 120,220 L 280,220 L 270,230 L 130,230 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['105']?.density)}`}
-            onClick={() => handleSectionClick('105')}
-            style={{ transform: selectedSection === '105' ? 'scale(1.03)' : 'none', transformOrigin: '200px 225px' }}
-          >
-            <title>Section 105 - Inner South</title>
-          </path>
+          {/* Declaring Sector Paths */}
+          {SECTIONS.map((sec) => {
+            const data = stadiumData[sec.id] || { density: 0, gateWait: 0 };
+            const heatClass = getHeatClass(data.density);
+            const isSelected = selectedSection === sec.id;
 
-          {/* Left Inner (107) */}
-          <path 
-            d="M 110,95 L 110,205 L 120,195 L 120,105 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['107']?.density)}`}
-            onClick={() => handleSectionClick('107')}
-            style={{ transform: selectedSection === '107' ? 'scale(1.03)' : 'none', transformOrigin: '115px 150px' }}
-          >
-            <title>Section 107 - Inner West</title>
-          </path>
-
-          {/* Right Inner (103) */}
-          <path 
-            d="M 290,95 L 290,205 L 280,195 L 280,105 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['103']?.density)}`}
-            onClick={() => handleSectionClick('103')}
-            style={{ transform: selectedSection === '103' ? 'scale(1.03)' : 'none', transformOrigin: '285px 150px' }}
-          >
-            <title>Section 103 - Inner East</title>
-          </path>
-
-          {/* Corners Inner */}
-          <path d="M 120,80 L 120,105 L 110,95 Z" className={`stadium-sector ${getHeatClass(stadiumData['108']?.density)}`} onClick={() => handleSectionClick('108')} />
-          <path d="M 280,80 L 280,105 L 290,95 Z" className={`stadium-sector ${getHeatClass(stadiumData['102']?.density)}`} onClick={() => handleSectionClick('102')} />
-          <path d="M 280,220 L 280,195 L 290,205 Z" className={`stadium-sector ${getHeatClass(stadiumData['104']?.density)}`} onClick={() => handleSectionClick('104')} />
-          <path d="M 120,220 L 120,195 L 110,205 Z" className={`stadium-sector ${getHeatClass(stadiumData['106']?.density)}`} onClick={() => handleSectionClick('106')} />
-
-          {/* OUTER BOWL SECTIONS */}
-          {/* Top Outer (201) */}
-          <path 
-            d="M 100,50 L 300,50 L 280,65 L 120,65 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['201']?.density)}`}
-            onClick={() => handleSectionClick('201')}
-          />
-          
-          {/* Bottom Outer (205) */}
-          <path 
-            d="M 100,250 L 300,250 L 280,235 L 120,235 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['205']?.density)}`}
-            onClick={() => handleSectionClick('205')}
-          />
-
-          {/* Left Outer (207) */}
-          <path 
-            d="M 90,75 L 90,225 L 105,210 L 105,90 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['207']?.density)}`}
-            onClick={() => handleSectionClick('207')}
-          />
-
-          {/* Right Outer (203) */}
-          <path 
-            d="M 310,75 L 310,225 L 295,210 L 295,90 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['203']?.density)}`}
-            onClick={() => handleSectionClick('203')}
-          />
-
-          {/* VIP SUITES - Designated sectors at Corners Outer */}
-          <path 
-            d="M 100,50 L 120,65 L 105,90 L 90,75 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['VIP-A']?.density)}`} 
-            onClick={() => handleSectionClick('VIP-A')} 
-          />
-          <path 
-            d="M 300,50 L 280,65 L 295,90 L 310,75 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['VIP-B']?.density)}`} 
-            onClick={() => handleSectionClick('VIP-B')} 
-          />
-          <path 
-            d="M 300,250 L 280,235 L 295,210 L 310,225 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['VIP-C']?.density)}`} 
-            onClick={() => handleSectionClick('VIP-C')} 
-          />
-          <path 
-            d="M 100,250 L 120,235 L 105,210 L 90,225 Z" 
-            className={`stadium-sector ${getHeatClass(stadiumData['VIP-D']?.density)}`} 
-            onClick={() => handleSectionClick('VIP-D')} 
-          />
+            return (
+              <path 
+                key={sec.id}
+                d={sec.d} 
+                className={`stadium-sector ${heatClass}`}
+                onClick={() => handleSectionClick(sec.id)}
+                onKeyDown={(e) => handleKeyDown(e, sec.id)}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-label={`${sec.title}. Current crowd density ${data.density} percent, entry gate wait time ${data.gateWait} minutes.`}
+                style={{ 
+                  transform: isSelected ? 'scale(1.03)' : 'none', 
+                  transformOrigin: sec.origin || 'center',
+                  outline: 'none'
+                }}
+              >
+                <title>{sec.title}</title>
+              </path>
+            );
+          })}
 
           {/* Exit Gates Visual Anchors */}
-          <circle cx="200" cy="30" r="6" fill="#06b6d4" />
-          <text x="200" y="20" fill="#06b6d4" fontSize="8" fontWeight="bold" textAnchor="middle">GATE A</text>
+          <circle cx="200" cy="30" r="6" fill="#06b6d4" aria-hidden="true" />
+          <text x="200" y="20" fill="#06b6d4" fontSize="8" fontWeight="bold" textAnchor="middle" aria-hidden="true">GATE A</text>
           
-          <circle cx="365" cy="150" r="6" fill="#06b6d4" />
-          <text x="365" y="162" fill="#06b6d4" fontSize="8" fontWeight="bold" textAnchor="middle">GATE B</text>
+          <circle cx="365" cy="150" r="6" fill="#06b6d4" aria-hidden="true" />
+          <text x="365" y="162" fill="#06b6d4" fontSize="8" fontWeight="bold" textAnchor="middle" aria-hidden="true">GATE B</text>
 
-          <circle cx="200" cy="275" r="6" fill="#06b6d4" />
-          <text x="200" y="290" fill="#06b6d4" fontSize="8" fontWeight="bold" textAnchor="middle">GATE C</text>
+          <circle cx="200" cy="275" r="6" fill="#06b6d4" aria-hidden="true" />
+          <text x="200" y="290" fill="#06b6d4" fontSize="8" fontWeight="bold" textAnchor="middle" aria-hidden="true">GATE C</text>
 
-          <circle cx="35" cy="150" r="6" fill="#06b6d4" />
-          <text x="35" y="162" fill="#06b6d4" fontSize="8" fontWeight="bold" textAnchor="middle">GATE D</text>
+          <circle cx="35" cy="150" r="6" fill="#06b6d4" aria-hidden="true" />
+          <text x="35" y="162" fill="#06b6d4" fontSize="8" fontWeight="bold" textAnchor="middle" aria-hidden="true">GATE D</text>
         </svg>
       </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Send, Bot, User, Trash2 } from 'lucide-react';
+import { Sparkles, Send, Bot, User, Trash2, Settings, Key, Check } from 'lucide-react';
 
 const STATIC_RESPONSES = {
   accessibility: `**Gemini AI Accessibility Response (MetLife Stadium)**:
@@ -60,6 +60,15 @@ How can I assist you today? Feel free to ask about accessibility routes, real-ti
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKey, setApiKey] = useState(() => {
+    try {
+      return (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('arenapulse_gemini_api_key')) || '';
+    } catch (e) {
+      return '';
+    }
+  });
+  const [keySaved, setKeySaved] = useState(false);
   const chatHistoryRef = useRef(null);
 
   useEffect(() => {
@@ -68,15 +77,93 @@ How can I assist you today? Feel free to ask about accessibility routes, real-ti
     }
   }, [messages, isTyping]);
 
-  const triggerResponse = (type, queryText) => {
+  const saveApiKey = (e) => {
+    e.preventDefault();
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('arenapulse_gemini_api_key', apiKey.trim());
+      }
+    } catch (err) {}
+    setKeySaved(true);
+    setTimeout(() => {
+      setKeySaved(false);
+      setShowSettings(false);
+    }, 1200);
+  };
+
+  const callRealGemini = async (promptText) => {
+    let key = '';
+    try {
+      key = (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('arenapulse_gemini_api_key')) || '';
+    } catch (e) {}
+    if (!key) return null;
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `You are ArenaAI, a real-time smart stadium and operations coordinator for the FIFA World Cup 2026.
+Active Stadium Location: ${activeStadium}
+User Role Interface: ${activeRole}
+
+User Request: "${promptText}"
+
+Respond clearly, concisely, and keep the answer formatted in standard markdown with bold elements for readability. Avoid extra pleasantries.`
+                  }
+                ]
+              }
+            ]
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`API error code ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    } catch (err) {
+      console.error('Gemini API Error:', err);
+      return `**Gemini API Connection Error**: ${err.message}. Falling back to simulated local database.`;
+    }
+  };
+
+  const triggerResponse = async (type, queryText) => {
     setIsTyping(true);
 
+    // Try calling real Gemini API first if API key is provided
+    const realResponse = await callRealGemini(queryText);
+    
+    if (realResponse) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: prev.length + 2,
+          sender: 'assistant',
+          text: realResponse,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+      setIsTyping(false);
+      return;
+    }
+
+    // Fallback to simulated response
     setTimeout(() => {
       let responseText = '';
       if (STATIC_RESPONSES[type]) {
         responseText = STATIC_RESPONSES[type];
       } else {
-        // Fallback parser for custom queries
         const query = queryText.toLowerCase();
         if (query.includes('accessibility') || query.includes('wheelchair') || query.includes('disabled')) {
           responseText = `**Gemini AI Accessibility Routing Assistance**:
@@ -119,7 +206,7 @@ For specialized answers, try asking about **accessibility routes**, **halal food
         }
       ]);
       setIsTyping(false);
-    }, 1500);
+    }, 1200);
   };
 
   const handleSend = (e) => {
@@ -146,7 +233,7 @@ For specialized answers, try asking about **accessibility routes**, **halal food
       {
         id: prev.length + 1,
         sender: 'user',
-        text: `[Quick Scenario] Run AI Analysis: ${label}`,
+        text: `[Scenario Run]: ${label}`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
@@ -166,18 +253,14 @@ For specialized answers, try asking about **accessibility routes**, **halal food
     }
   };
 
-  // Helper to convert Markdown-like syntax to basic React tags for nice styling in chat
   const formatText = (text) => {
     return text.split('\n').map((line, index) => {
-      let content = line;
-      let isBold = false;
       let isBullet = false;
       
       if (line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s/.test(line)) {
         isBullet = true;
       }
       
-      // Basic markdown parser
       const boldRegex = /\*\*(.*?)\*\*/g;
       const parts = [];
       let lastIndex = 0;
@@ -201,7 +284,7 @@ For specialized answers, try asking about **accessibility routes**, **halal food
           paddingLeft: isBullet ? '12px' : '0px',
           textIndent: isBullet ? '-12px' : '0'
         }}>
-          {parts.length > 0 ? parts : content}
+          {parts.length > 0 ? parts : line}
         </div>
       );
     });
@@ -211,20 +294,65 @@ For specialized answers, try asking about **accessibility routes**, **halal food
     <div className="glass-card glow-indigo" style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
       <div className="card-title-bar">
         <h3>
-          <Sparkles size={18} style={{ color: 'var(--accent-ai)', filter: 'drop-shadow(0 0 4px rgba(99, 102, 241, 0.6))' }} />
+          <Bot size={18} style={{ color: 'var(--accent-ai)', filter: 'drop-shadow(0 0 4px rgba(99, 102, 241, 0.6))' }} />
           ArenaAI Copilot
         </h3>
-        <button 
-          onClick={clearChat}
-          style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-          title="Clear chat history"
-        >
-          <Trash2 size={16} />
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button 
+            onClick={() => setShowSettings(!showSettings)}
+            style={{ background: 'transparent', border: 'none', color: showSettings ? 'var(--accent-cyber)' : '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Configure Gemini API Settings"
+            aria-label="Toggle Gemini API Key configuration Settings"
+          >
+            <Settings size={16} />
+          </button>
+          <button 
+            onClick={clearChat}
+            style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Clear chat history"
+            aria-label="Clear chat history log"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
 
+      {/* Settings Drawer */}
+      {showSettings && (
+        <form onSubmit={saveApiKey} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="api-key-input" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Key size={12} /> Google Gemini API Key:
+            </label>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <input 
+                id="api-key-input"
+                type="password" 
+                className="form-input" 
+                style={{ flex: 1, padding: '6px 10px', fontSize: '0.8rem' }}
+                placeholder="AIzaSy..."
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+              />
+              <button type="submit" className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {keySaved ? <Check size={14} /> : 'Save'}
+              </button>
+            </div>
+            <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+              Key is stored locally in your browser's localStorage and used direct client-side.
+            </span>
+          </div>
+        </form>
+      )}
+
       <div className="chat-container">
-        <div className="chat-history" ref={chatHistoryRef}>
+        <div 
+          className="chat-history" 
+          ref={chatHistoryRef} 
+          role="log" 
+          aria-live="polite" 
+          aria-label="ArenaAI Conversation Chat Log"
+        >
           {messages.map((msg) => (
             <div 
               key={msg.id} 
@@ -244,13 +372,15 @@ For specialized answers, try asking about **accessibility routes**, **halal food
             <div className="chat-bubble assistant" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Bot size={12} style={{ color: 'var(--accent-ai)' }} />
               <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Analyzing stadium logistics</span>
-              <span className="typist-cursor"></span>
+              <span className="typist-cursor" aria-hidden="true"></span>
             </div>
           )}
         </div>
 
         <form onSubmit={handleSend} className="chat-input-bar">
+          <label htmlFor="chat-query-input" className="form-label" style={{ display: 'none' }}>Ask a question</label>
           <input 
+            id="chat-query-input"
             type="text" 
             className="chat-input" 
             placeholder={`Ask ArenaAI for ${activeStadium}...`} 
@@ -258,7 +388,12 @@ For specialized answers, try asking about **accessibility routes**, **halal food
             onChange={(e) => setInputText(e.target.value)}
             disabled={isTyping}
           />
-          <button type="submit" className="chat-send-btn" disabled={isTyping || !inputText.trim()}>
+          <button 
+            type="submit" 
+            className="chat-send-btn" 
+            disabled={isTyping || !inputText.trim()}
+            aria-label="Send message"
+          >
             <Send size={16} />
           </button>
         </form>
@@ -268,12 +403,13 @@ For specialized answers, try asking about **accessibility routes**, **halal food
         <p style={{ fontSize: '0.78rem', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px' }}>
           Interactive AI Training Prompt Scenarios:
         </p>
-        <div className="quick-prompts-grid">
+        <div className="quick-prompts-grid" role="group" aria-label="Quick AI prompt options">
           <button 
             type="button" 
             className="quick-prompt-card"
             onClick={() => handleQuickPrompt('accessibility', 'Wheelchair ADA navigation route')}
             disabled={isTyping}
+            aria-label="Analyze Section 101 wheelchair route"
           >
             ♿ <strong>Accessibility Path</strong>
             <p style={{ fontSize: '0.70rem', color: '#64748b', marginTop: '2px' }}>MetLife Sec 101 wheelchair ramp & lift guide.</p>
@@ -283,6 +419,7 @@ For specialized answers, try asking about **accessibility routes**, **halal food
             className="quick-prompt-card"
             onClick={() => handleQuickPrompt('translate', 'Multilingual Translation Help')}
             disabled={isTyping}
+            aria-label="Demos multilingual ticket help translations"
           >
             🗣️ <strong>Multilingual Translator</strong>
             <p style={{ fontSize: '0.70rem', color: '#64748b', marginTop: '2px' }}>Translate ticket help inquiries into 6 languages.</p>
@@ -292,6 +429,7 @@ For specialized answers, try asking about **accessibility routes**, **halal food
             className="quick-prompt-card"
             onClick={() => handleQuickPrompt('emergency', 'Crisis extreme heat warning script')}
             disabled={isTyping}
+            aria-label="Generate extreme heat crisis announcement"
           >
             🚨 <strong>Extreme Heat Alert PA</strong>
             <p style={{ fontSize: '0.70rem', color: '#64748b', marginTop: '2px' }}>Generate stadium cooling and hydration script.</p>
@@ -301,6 +439,7 @@ For specialized answers, try asking about **accessibility routes**, **halal food
             className="quick-prompt-card"
             onClick={() => handleQuickPrompt('sustainability', 'Concessions waste optimization')}
             disabled={isTyping}
+            aria-label="Analyze concession waste optimization"
           >
             ♻️ <strong>Eco-Energy Savings</strong>
             <p style={{ fontSize: '0.70rem', color: '#64748b', marginTop: '2px' }}>AI HVAC dynamic load suggestions & recycling incentive.</p>

@@ -26,13 +26,83 @@ export default function OpsDashboard({
     setActiveAlerts(prev => prev.filter(alert => alert.id !== id));
   };
 
-  const handleGeneratePlan = (e) => {
+  const handleGeneratePlan = async (e) => {
     e.preventDefault();
     if (!description.trim()) return;
 
     setIsPlanning(true);
     
-    // Simulate Gemini AI Incident Command Analysis
+    let key = '';
+    try {
+      key = (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('arenapulse_gemini_api_key')) || '';
+    } catch (err) {}
+    
+    if (key) {
+      try {
+        const promptText = `You are the Crisis Management AI for the FIFA World Cup 2026 stadium operations.
+An incident has been logged:
+- Category: ${incidentCategory}
+- Location: ${incidentLocation}
+- Severity: ${severity}
+- Details: ${description}
+
+Generate a JSON response containing:
+1. "priority": the priority level (e.g. CRITICAL - P1, HIGH - P2, STANDARD - P3)
+2. "team": the name of the dispatched crew (e.g. Medical team, Security, etc.)
+3. "broadcast": a 1-sentence megaphone broadcast warning for volunteers on the floor
+4. "steps": an array of 4 clear, sequential dispatch actions for volunteers responding.
+
+Respond ONLY with valid JSON matching the format:
+{
+  "priority": "...",
+  "team": "...",
+  "broadcast": "...",
+  "steps": ["Step 1", "Step 2", "Step 3", "Step 4"]
+}`;
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }]
+            })
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`API error code ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        let jsonText = rawText.trim();
+        if (jsonText.startsWith('```')) {
+          jsonText = jsonText.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+        }
+        
+        const parsed = JSON.parse(jsonText);
+        setAiPlan({
+          priority: parsed.priority || 'HIGH - P2',
+          category: incidentCategory,
+          location: incidentLocation,
+          team: parsed.team || 'Incident Team',
+          steps: parsed.steps || ['Inspect location', 'Divert crowd flow', 'Notify section supervisor', 'Log final resolution status'],
+          broadcast: parsed.broadcast || `⚠️ ALERT: ${incidentCategory} at ${incidentLocation}. Volunteers please assist.`,
+          rawDescription: description
+        });
+        setIsPlanning(false);
+        return;
+      } catch (err) {
+        console.error("Gemini Incident Command Plan API Error:", err);
+        // Fall back to simulated response below
+      }
+    }
+
+    // Simulate Gemini AI Incident Command Analysis (Fallback)
     setTimeout(() => {
       let priority = severity === 'High' ? 'CRITICAL - P1' : severity === 'Medium' ? 'HIGH - P2' : 'STANDARD - P3';
       let responseTeam = incidentCategory === 'Medical' ? 'Medical Response Team 2' 

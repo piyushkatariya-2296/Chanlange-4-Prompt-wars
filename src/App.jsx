@@ -232,22 +232,31 @@ export default function App() {
             </select>
           </div>
 
-          <div className="role-badge-container">
+          <div className="role-badge-container" role="tablist" aria-label="Select User Role View">
             <button 
               className={`role-btn ${activeRole === 'fan' ? 'active' : ''}`}
               onClick={() => handleRoleChange('fan')}
+              role="tab"
+              aria-selected={activeRole === 'fan'}
+              aria-label="Switch to Fan Dashboard View"
             >
               <Compass size={14} /> Fan
             </button>
             <button 
               className={`role-btn role-staff ${activeRole === 'staff' ? 'active' : ''}`}
               onClick={() => handleRoleChange('staff')}
+              role="tab"
+              aria-selected={activeRole === 'staff'}
+              aria-label="Switch to Operations Staff Dashboard View"
             >
               <Activity size={14} /> Operations
             </button>
             <button 
               className={`role-btn role-volunteer ${activeRole === 'volunteer' ? 'active' : ''}`}
               onClick={() => handleRoleChange('volunteer')}
+              role="tab"
+              aria-selected={activeRole === 'volunteer'}
+              aria-label="Switch to Volunteer Handset View"
             >
               <ClipboardList size={14} /> Volunteer
             </button>
@@ -304,22 +313,31 @@ export default function App() {
 
       {/* Navigation Sub-Tabs based on the selected Role */}
       {activeRole === 'fan' && (
-        <nav className="nav-tabs">
+        <nav className="nav-tabs" role="tablist" aria-label="Fan Dashboard Navigation Sub-tabs">
           <button 
             className={`tab-btn ${fanTab === 'map' ? 'active' : ''}`}
             onClick={() => setFanTab('map')}
+            role="tab"
+            aria-selected={fanTab === 'map'}
+            aria-label="Stadium Map and AI Crowd Rerouting"
           >
             <Compass size={16} /> Stadium Map & AI Rerouting
           </button>
           <button 
             className={`tab-btn ${fanTab === 'transit' ? 'active' : ''}`}
             onClick={() => setFanTab('transit')}
+            role="tab"
+            aria-selected={fanTab === 'transit'}
+            aria-label="Eco-Transit Routing and Green Challenges"
           >
             <Zap size={16} /> Eco-Transit & Green Challenges
           </button>
           <button 
             className={`tab-btn ${fanTab === 'copilot' ? 'active' : ''}`}
             onClick={() => setFanTab('copilot')}
+            role="tab"
+            aria-selected={fanTab === 'copilot'}
+            aria-label="Gemini Copilot AI Chatbot"
           >
             <Sparkles size={16} style={{ color: 'var(--accent-gold)' }} /> Ask ArenaAI
           </button>
@@ -327,22 +345,31 @@ export default function App() {
       )}
 
       {activeRole === 'staff' && (
-        <nav className="nav-tabs">
+        <nav className="nav-tabs" role="tablist" aria-label="Operations Dashboard Navigation Sub-tabs">
           <button 
             className={`tab-btn ${staffTab === 'map' ? 'active' : ''}`}
             onClick={() => setStaffTab('map')}
+            role="tab"
+            aria-selected={staffTab === 'map'}
+            aria-label="Interactive Crowd Heatmap"
           >
             <Compass size={16} /> Interactive Crowd Heatmap
           </button>
           <button 
             className={`tab-btn ${staffTab === 'ops' ? 'active' : ''}`}
             onClick={() => setStaffTab('ops')}
+            role="tab"
+            aria-selected={staffTab === 'ops'}
+            aria-label="Operations Command Panel"
           >
             <Activity size={16} /> Operations Command Panel
           </button>
           <button 
             className={`tab-btn ${staffTab === 'copilot' ? 'active' : ''}`}
             onClick={() => setStaffTab('copilot')}
+            role="tab"
+            aria-selected={staffTab === 'copilot'}
+            aria-label="Gemini Decision Support Chat"
           >
             <Sparkles size={16} style={{ color: 'var(--accent-gold)' }} /> AI Decision Support Chat
           </button>
@@ -350,22 +377,31 @@ export default function App() {
       )}
 
       {activeRole === 'volunteer' && (
-        <nav className="nav-tabs">
+        <nav className="nav-tabs" role="tablist" aria-label="Volunteer Dashboard Navigation Sub-tabs">
           <button 
             className={`tab-btn ${volunteerTab === 'tasks' ? 'active' : ''}`}
             onClick={() => setVolunteerTab('tasks')}
+            role="tab"
+            aria-selected={volunteerTab === 'tasks'}
+            aria-label="Duty Tasks Terminal"
           >
             <ClipboardList size={16} /> Duty Tasks Terminal
           </button>
           <button 
             className={`tab-btn ${volunteerTab === 'hub' ? 'active' : ''}`}
             onClick={() => setVolunteerTab('hub')}
+            role="tab"
+            aria-selected={volunteerTab === 'hub'}
+            aria-label="Multilingual Translator Aid"
           >
             <Languages size={16} /> Multilingual Translator Aid
           </button>
           <button 
             className={`tab-btn ${volunteerTab === 'copilot' ? 'active' : ''}`}
             onClick={() => setVolunteerTab('copilot')}
+            role="tab"
+            aria-selected={volunteerTab === 'copilot'}
+            aria-label="Volunteer Copilot AI Chatbot"
           >
             <Sparkles size={16} style={{ color: 'var(--accent-gold)' }} /> Volunteer Copilot AI
           </button>
