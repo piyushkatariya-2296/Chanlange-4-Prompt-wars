@@ -68,6 +68,27 @@ describe('StadiumMap Component Accessibility & Interactive Tests', () => {
     expect(mockSetSelected).toHaveBeenCalledWith('105');
   });
 
+  it('triggers setSelectedSection callback on sector button keypress', () => {
+    const mockSetSelected = vi.fn();
+    render(
+      <StadiumMap 
+        selectedSection=""
+        setSelectedSection={mockSetSelected}
+        stadiumData={MOCK_STADIUM_DATA}
+        simulationMode="arrival"
+      />
+    );
+    const sector105 = screen.getByRole('button', { name: /Section 105 - Inner South/i });
+    
+    // Press Space key
+    fireEvent.keyDown(sector105, { key: ' ', code: 'Space' });
+    expect(mockSetSelected).toHaveBeenCalledWith('105');
+
+    // Press Enter key
+    fireEvent.keyDown(sector105, { key: 'Enter', code: 'Enter' });
+    expect(mockSetSelected).toHaveBeenCalledWith('105');
+  });
+
   it('displays detailed queue times when a section is active', () => {
     render(
       <StadiumMap 

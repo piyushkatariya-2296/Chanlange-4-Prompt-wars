@@ -32,4 +32,30 @@ describe('App Component Core Tests', () => {
     expect(screen.getByText('Duty Tasks Terminal')).toBeInTheDocument();
     expect(screen.getByText('Multilingual Translator Aid')).toBeInTheDocument();
   });
+
+  it('allows changing active stadium from dropdown', () => {
+    render(<App />);
+    const select = screen.getByRole('combobox');
+    expect(select.value).toBe('metlife');
+    
+    fireEvent.change(select, { target: { value: 'azteca' } });
+    expect(select.value).toBe('azteca');
+  });
+
+  it('allows switching match simulation phases', () => {
+    render(<App />);
+    expect(screen.getByText(/Pre-Match Fan Arrival/i)).toBeInTheDocument();
+    
+    // Switch to Halftime
+    const halftimeBtn = screen.getByRole('button', { name: /Surge/i });
+    fireEvent.click(halftimeBtn);
+    expect(screen.getByText(/Halftime Ingress Surge/i)).toBeInTheDocument();
+    
+    // Switch to Emergency Evacuation
+    const emergencyBtn = screen.getByRole('button', { name: /Simulation/i });
+    fireEvent.click(emergencyBtn);
+    expect(screen.getByText(/Evacuation Simulation/i)).toBeInTheDocument();
+    // Emergency alert triggers warning
+    expect(screen.getByText(/🚨 CRITICAL SYSTEM ALARM: Evacuation/i)).toBeInTheDocument();
+  });
 });

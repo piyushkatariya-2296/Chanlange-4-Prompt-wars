@@ -276,8 +276,9 @@ export default function VolunteerHub({ tasks, setTasks, activeStadium, onReportI
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div className="form-group">
-              <label className="form-label">Select Fan’s Native Language</label>
+              <label className="form-label" htmlFor="volunteer-language-select">Select Fan’s Native Language</label>
               <select 
+                id="volunteer-language-select"
                 className="form-input" 
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value)}
@@ -290,8 +291,9 @@ export default function VolunteerHub({ tasks, setTasks, activeStadium, onReportI
 
             {/* Presets */}
             <div className="form-group">
-              <label className="form-label">Common Fan Query Scenarios</label>
+              <label className="form-label" htmlFor="volunteer-preset-select">Common Fan Query Scenarios</label>
               <select 
+                id="volunteer-preset-select"
                 className="form-input" 
                 value={selectedQueryId}
                 onChange={(e) => setSelectedQueryId(e.target.value)}
@@ -330,9 +332,10 @@ export default function VolunteerHub({ tasks, setTasks, activeStadium, onReportI
 
             {/* Custom text translator */}
             <form onSubmit={handleTranslateCustom} className="form-group" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
-              <label className="form-label">Or Type Custom Phrase to Translate</label>
+              <label className="form-label" htmlFor="volunteer-custom-input">Or Type Custom Phrase to Translate</label>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <input 
+                  id="volunteer-custom-input"
                   type="text" 
                   className="form-input" 
                   style={{ flex: 1, fontSize: '0.8rem' }}
@@ -372,8 +375,9 @@ export default function VolunteerHub({ tasks, setTasks, activeStadium, onReportI
           <form onSubmit={handleFieldReport} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <div className="form-group">
-                <label className="form-label">Category</label>
+                <label className="form-label" htmlFor="volunteer-report-category">Category</label>
                 <select 
+                  id="volunteer-report-category"
                   className="form-input"
                   value={reportCategory}
                   onChange={(e) => setReportCategory(e.target.value)}
@@ -385,8 +389,9 @@ export default function VolunteerHub({ tasks, setTasks, activeStadium, onReportI
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Floor Sector</label>
+                <label className="form-label" htmlFor="volunteer-report-location">Floor Sector</label>
                 <select 
+                  id="volunteer-report-location"
                   className="form-input"
                   value={reportLocation}
                   onChange={(e) => setReportLocation(e.target.value)}
@@ -401,8 +406,9 @@ export default function VolunteerHub({ tasks, setTasks, activeStadium, onReportI
             </div>
 
             <div className="form-group">
-              <label className="form-label">Observed Details</label>
+              <label className="form-label" htmlFor="volunteer-report-desc">Observed Details</label>
               <input 
+                id="volunteer-report-desc"
                 type="text" 
                 className="form-input"
                 placeholder="e.g. Liquid spill near handrail, fan lost ticket, escalator running slowly..."
